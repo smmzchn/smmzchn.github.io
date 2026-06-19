@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文章管理 — 时笠的博客</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Admin Page Specific Styles */
+    .admin-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--hover);
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    /* Login Form */
+    .login-box {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 40px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .login-box h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: var(--text);
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .login-box button {
+      width: 100%;
+    }
+
+    .error-msg {
+      color: #e74c3c;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* Article List */
+    .article-list {
+      margin-top: 20px;
+    }
+
+    .article-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background: var(--card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .article-info {
+      flex: 1;
+    }
+
+    .article-info h3 {
+      margin: 0 0 5px 0;
+      color: var(--text);
+    }
+
+    .article-meta {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .article-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Editor */
+    .editor-container {
+      display: none;
+    }
+
+    .editor-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .editor-form {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .editor-form input,
+    .editor-form select,
+    .editor-form textarea {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .editor-form textarea {
+      min-height: 300px;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+    }
+
+    .preview-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .preview-panel h3 {
+      margin-top: 0;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .preview-content {
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .preview-content h1, .preview-content h2, .preview-content h3 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .preview-content p {
+      margin-bottom: 10px;
+    }
+
+    .preview-content code {
+      background: var(--hover);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    .preview-content pre {
+      background: var(--hover);
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    .preview-content pre code {
+      background: none;
+      padding: 0;
+    }
+
+    .preview-content blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 15px;
+      margin: 15px 0;
+      color: var(--text-dim);
+    }
+
+    /* GitHub Config */
+    .github-config {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .github-config h3 {
+      margin-top: 0;
+      color: var(--text);
+    }
+
+    .config-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .config-row input {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .status-msg {
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <div class="site-title">时笠</div>
+      <div class="site-tagline">博客管理后台</div>
+      <nav class="site-nav">
+        <a href="index.html">返回博客</a>
+      </nav>
+    </header>
+
+    <div class="admin-container">
+      <!-- Login Section -->
+      <div id="loginSection">
+        <div class="login-box">
+          <h2>🔐 管理后台登录</h2>
+          <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 20px; text-align: center;">
+            使用 GitHub Personal Access Token 登录
+          </p>
+          
+          <div style="margin-bottom: 15px;">
+            <input type="password" id="tokenInput" placeholder="粘贴 GitHub Token" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 1rem;">
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 8px;">
+              <a href="https://github.com/settings/tokens/new" target="_blank" style="color: var(--accent);">点击这里生成 Token</a>
+              （需要勾选 repo 权限）
+            </p>
+          </div>
+
+          <button class="btn btn-primary" onclick="loginWithToken()" style="width: 100%;">登录</button>
+          
+          <div id="loginError" class="error-msg"></div>
+          
+          <div id="loginStatus" style="margin-top: 15px; font-size: 0.85rem; color: var(--text-dim); text-align: center; display: none;">
+            <p>✅ Token 验证成功！</p>
+            <p>用户：<span id="usernameDisplay"></span></p>
+            <button class="btn btn-primary" onclick="enterAdmin()" style="margin-top: 10px;">进入管理后台</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Content (hidden until logged in) -->
+      <div id="adminContent" style="display: none;">
+        <div class="admin-header">
+          <div class="admin-title">文章管理</div>
+          <div>
+            <button class="btn btn-primary" onclick="showEditor()">✏️ 新建文章</button>
+            <button class="btn btn-secondary" onclick="logout()">退出登录</button>
+          </div>
+        </div>
+
+        <!-- GitHub Config -->
+        <div class="github-config">
+          <h3>⚙️ GitHub 仓库配置</h3>
+          <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 15px;">
+            配置仓库信息（Token 已通过登录自动获取）
+          </p>
+          <div class="config-row">
+            <input type="text" id="githubRepo" placeholder="用户名/仓库名 (如: user/repo)">
+            <input type="text" id="githubBranch" placeholder="分支名 (默认: main)" value="main">
+          </div>
+          <div class="config-row">
+            <button class="btn btn-secondary" onclick="saveGitHubConfig()">保存配置</button>
+            <button class="btn btn-primary" onclick="testGitHubConnection()">测试连接</button>
+          </div>
+          <div id="githubStatus" class="status-msg"></div>
+        </div>
+
+        <!-- Article List -->
+        <div class="article-list" id="articleList">
+          <!-- Articles will be loaded here -->
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-container" id="editorContainer">
+          <div class="editor-toolbar">
+            <button class="btn btn-secondary" onclick="hideEditor()">← 返回列表</button>
+            <button class="btn btn-primary" onclick="saveArticle()">💾 保存文章</button>
+            <button class="btn btn-secondary" onclick="togglePreview()">👁️ 预览</button>
+            <button class="btn btn-primary" onclick="publishToGitHub()" style="background: #2ea44f;">🚀 发布到 GitHub</button>
+          </div>
+
+          <div class="editor-form">
+            <input type="text" id="articleTitle" placeholder="文章标题" oninput="updatePreview()">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <input type="date" id="articleDate">
+              <select id="articleTag" onchange="updatePreview()">
+                <option value="tech">技术</option>
+                <option value="life">生活</option>
+              </select>
+            </div>
+            <input type="text" id="articleExcerpt" placeholder="文章摘要（会显示在文章列表中）" oninput="updatePreview()">
+            <textarea id="articleContent" placeholder="在这里写文章内容（支持 Markdown 格式）..." oninput="updatePreview()"></textarea>
+          </div>
+
+          <div class="preview-panel" id="previewPanel">
+            <h3>📖 文章预览</h3>
+            <div class="preview-content" id="previewContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== GitHub Token Authentication ==========
+    const GITHUB_API = 'https://api.github.com';
+    
+    // 从 sessionStorage 获取 token（而不是 localStorage）
+    function getToken() {
+      return sessionStorage.getItem('github_token');
+    }
+    
+    function setToken(token) {
+      sessionStorage.setItem('github_token', token);
+    }
+    
+    function clearToken() {
+      sessionStorage.removeItem('github_token');
+    }
+    
+    // 验证 Token 是否有效
+    async function verifyToken(token) {
+      try {
+        const resp = await fetch(`${GITHUB_API}/user`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (resp.ok) {
+          const user = await resp.json();
+          return { success: true, user };
+        } else {
+          const error = await resp.json();
+          return { success: false, error: error.message };
+        }
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    
+    // 检查用户是否有权限（比如是否是仓库所有者）
+    async function checkPermission(token, repoOwner) {
+      const userInfo = await verifyToken(token);
+      if (!userInfo.success) return false;
+      
+      // 这里可以设置允许的用户名列表
+      const allowedUsers = [repoOwner]; // 可以添加多个用户名
+      return allowedUsers.includes(userInfo.user.login);
+    }
+    
+    // 登录函数
+    async function loginWithToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      const errorDiv = document.getElementById('loginError');
+      const statusDiv = document.getElementById('loginStatus');
+      
+      if (!token) {
+        errorDiv.textContent = '请输入 GitHub Token';
+        return;
+      }
+      
+      // 显示加载状态
+      errorDiv.textContent = '';
+      document.querySelector('#loginSection button').disabled = true;
+      document.querySelector('#loginSection button').textContent = '验证中...';
+      
+      // 验证 token
+      const result = await verifyToken(token);
+      
+      if (result.success) {
+        // Token 有效
+        setToken(token);
+        document.getElementById('usernameDisplay').textContent = result.user.login;
+        statusDiv.style.display = 'block';
+        errorDiv.textContent = '';
+      } else {
+        // Token 无效
+        errorDiv.textContent = `❌ ${result.error}`;
+        document.querySelector('#loginSection button').disabled = false;
+        document.querySelector('#loginSection button').textContent = '登录';
+      }
+    }
+    
+    function enterAdmin() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      loadGitHubConfig();
+      loadArticles();
+    }
+    
+    function logout() {
+      clearToken();
+      document.getElementById('adminContent').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('loginStatus').style.display = 'none';
+      document.getElementById('tokenInput').value = '';
+      document.querySelector('#loginSection button').disabled = false;
+      document.querySelector('#loginSection button').textContent = '登录';
+    }
+    
+    // 检查是否已经登录
+    async function checkAuth() {
+      const token = getToken();
+      if (token) {
+        const result = await verifyToken(token);
+        if (result.success) {
+          // 已经登录，直接进入
+          document.getElementById('usernameDisplay').textContent = result.user.login;
+          enterAdmin();
+          return true;
+        } else {
+          // Token 失效，清除
+          clearToken();
+        }
+      }
+      return false;
+    }
+    
+    // 页面加载时检查认证状态
+    checkAuth();
+    
+    // Allow Enter key to login
+    document.getElementById('tokenInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') loginWithToken();
+    });
+
+    // ========== Simple Markdown Parser ==========
+    function parseMarkdown(md) {
+      let html = md;
+      
+      // Code blocks
+      html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      
+      // Headers
+      html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+      
+      // Bold and italic
+      html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      
+      // Links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+      
+      // Inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      
+      // Blockquotes
+      html = html.replace(/^> (.*)$/gm, '<blockquote>$1</blockquote>');
+      
+      // Unordered list
+      html = html.replace(/^- (.*)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+      
+      // Paragraphs
+      html = html.replace(/^(?!<[a-z]).*$/gm, function(match) {
+        if (match.trim() === '') return '';
+        return '<p>' + match + '</p>';
+      });
+      
+      return html;
+    }
+
+    // ========== GitHub Config ==========
+    const GITHUB_CONFIG_KEY = 'shili_blog_github_config';
+
+    function saveGitHubConfig() {
+      const repo = document.getElementById('githubRepo').value.trim();
+      const branch = document.getElementById('githubBranch').value.trim() || 'main';
+
+      if (!repo) {
+        showStatus('githubStatus', '请填写仓库名', 'error');
+        return;
+      }
+
+      const config = { repo, branch };
+      localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
+      showStatus('githubStatus', '✅ GitHub 配置已保存', 'success');
+    }
+
+    function loadGitHubConfig() {
+      const configStr = localStorage.getItem(GITHUB_CONFIG_KEY);
+      if (configStr) {
+        const config = JSON.parse(configStr);
+        document.getElementById('githubRepo').value = config.repo || '';
+        document.getElementById('githubBranch').value = config.branch || 'main';
+      }
+    }
+    
+    // 测试 GitHub 连接
+    async function testGitHubConnection() {
+      const token = getToken();
+      const repo = document.getElementById('githubRepo').value.trim();
+      const branch = document.getElementById('githubBranch').value.trim() || 'main';
+      
+      if (!token || !repo) {
+        showStatus('githubStatus', '❌ 请先登录并填写仓库名', 'error');
+        return;
+      }
+      
+      try {
+        showStatus('githubStatus', '🔄 正在测试连接...', 'success');
+        const resp = await fetch(`${GITHUB_API}/repos/${repo}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (resp.ok) {
+          const repoInfo = await resp.json();
+          showStatus('githubStatus', `✅ 连接成功！仓库: ${repoInfo.full_name}`, 'success');
+        } else {
+          const error = await resp.json();
+          showStatus('githubStatus', `❌ 连接失败: ${error.message}`, 'error');
+        }
+      } catch (e) {
+        showStatus('githubStatus', `❌ 连接失败: ${e.message}`, 'error');
+      }
+    }
+
+    // ========== Article Management ==========
+    const ARTICLES_KEY = 'shili_blog_articles';
+
+    // 从GitHub加载文章到localStorage
+    async function loadArticlesFromGitHub() {
+      const token = getToken();
+      const configStr = localStorage.getItem(GITHUB_CONFIG_KEY);
+      if (!token || !configStr) return;
+
+      try {
+        const config = JSON.parse(configStr);
+        const resp = await fetch(`https://api.github.com/repos/${config.repo}/contents/posts.json?ref=${config.branch}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const posts = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+          saveArticles(posts);
+          console.log('✅ 已从GitHub加载文章列表');
+        }
+      } catch (e) {
+        console.warn('无法从GitHub加载文章', e);
+      }
+    }
+
+    function getArticles() {
+      const articlesStr = localStorage.getItem(ARTICLES_KEY);
+      if (!articlesStr) return [];
+      return JSON.parse(articlesStr);
+    }
+
+    function saveArticles(articles) {
+      localStorage.setItem(ARTICLES_KEY, JSON.stringify(articles));
+    }
+
+    function loadArticles() {
+      const articles = getArticles();
+      const listDiv = document.getElementById('articleList');
+
+      if (articles.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: var(--text-dim); padding: 40px 0;">暂无文章，点击"新建文章"开始创作</p>';
+        return;
+      }
+
+      listDiv.innerHTML = articles.map(article => `
+        <div class="article-item">
+          <div class="article-info">
+            <h3>${escapeHtml(article.title)}</h3>
+            <div class="article-meta">
+              ${article.date} · ${article.tag === 'tech' ? '技术' : '生活'}
+            </div>
+          </div>
+          <div class="article-actions">
+            <button class="btn btn-secondary" onclick="editArticle('${article.id}')">编辑</button>
+            <button class="btn btn-danger" onclick="deleteArticle('${article.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showEditor(articleId = null) {
+      document.getElementById('articleList').style.display = 'none';
+      document.getElementById('editorContainer').style.display = 'block';
+      document.getElementById('previewPanel').style.display = 'none';
+
+      if (articleId) {
+        // Edit mode
+        const articles = getArticles();
+        const article = articles.find(a => a.id === articleId);
+        if (article) {
+          document.getElementById('articleTitle').value = article.title;
+          document.getElementById('articleDate').value = article.date;
+          document.getElementById('articleTag').value = article.tag;
+          document.getElementById('articleExcerpt').value = article.excerpt;
+          document.getElementById('articleContent').value = article.content;
+          currentEditId = articleId;
+        }
+      } else {
+        // New article
+        document.getElementById('articleTitle').value = '';
+        document.getElementById('articleDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('articleTag').value = 'tech';
+        document.getElementById('articleExcerpt').value = '';
+        document.getElementById('articleContent').value = '';
+        currentEditId = null;
+      }
+
+      updatePreview();
+    }
+
+    function hideEditor() {
+      document.getElementById('editorContainer').style.display = 'none';
+      document.getElementById('articleList').style.display = 'block';
+      currentEditId = null;
+    }
+
+    let currentEditId = null;
+
+    function saveArticle() {
+      const title = document.getElementById('articleTitle').value.trim();
+      const date = document.getElementById('articleDate').value;
+      const tag = document.getElementById('articleTag').value;
+      const excerpt = document.getElementById('articleExcerpt').value.trim();
+      const content = document.getElementById('articleContent').value.trim();
+
+      if (!title || !content) {
+        alert('请填写标题和内容');
+        return;
+      }
+
+      const articles = getArticles();
+      const id = currentEditId || title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
+
+      const article = { id, title, date, tag, excerpt, content };
+
+      if (currentEditId) {
+        const index = articles.findIndex(a => a.id === currentEditId);
+        if (index !== -1) articles[index] = article;
+      } else {
+        articles.unshift(article);
+      }
+
+      saveArticles(articles);
+      hideEditor();
+      loadArticles();
+      showStatus('githubStatus', '✅ 文章已保存到本地', 'success');
+    }
+
+    function editArticle(id) {
+      showEditor(id);
+    }
+
+    function deleteArticle(id) {
+      if (!confirm('确定要删除这篇文章吗？')) return;
+
+      const articles = getArticles().filter(a => a.id !== id);
+      saveArticles(articles);
+      loadArticles();
+    }
+
+    // ========== Preview ==========
+    function updatePreview() {
+      const title = document.getElementById('articleTitle').value;
+      const content = document.getElementById('articleContent').value;
+      
+      const previewDiv = document.getElementById('previewContent');
+      let previewHTML = `<h1>${escapeHtml(title)}</h1>`;
+      previewHTML += parseMarkdown(content);
+      previewDiv.innerHTML = previewHTML;
+    }
+
+    function togglePreview() {
+      const panel = document.getElementById('previewPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      if (panel.style.display === 'block') {
+        updatePreview();
+      }
+    }
+
+    // ========== GitHub Publishing ==========
+    async function publishToGitHub() {
+      const token = getToken();
+      const configStr = localStorage.getItem(GITHUB_CONFIG_KEY);
+      
+      if (!token) {
+        showStatus('githubStatus', '❌ 请先登录', 'error');
+        return;
+      }
+      
+      if (!configStr) {
+        showStatus('githubStatus', '❌ 请先配置 GitHub 仓库信息', 'error');
+        return;
+      }
+
+      const config = JSON.parse(configStr);
+      const title = document.getElementById('articleTitle').value.trim();
+      const date = document.getElementById('articleDate').value;
+      const tag = document.getElementById('articleTag').value;
+      const excerpt = document.getElementById('articleExcerpt').value.trim();
+      const content = document.getElementById('articleContent').value.trim();
+
+      if (!title || !content) {
+        alert('请填写标题和内容');
+        return;
+      }
+
+      // Generate article ID
+      const id = currentEditId || title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
+
+      // Create Markdown file content
+      const frontMatter = `---
+title: ${title}
+date: ${date}
+tag: ${tag}
+excerpt: ${excerpt}
+---
+
+# ${title}
+
+${content}`;
+
+      // GitHub API: Create/Update file
+      const path = `posts/${id}.md`;
+      const message = `Add/Update article: ${title}`;
+      
+      // First, check if file exists to get SHA
+      let sha = null;
+      try {
+        const checkResp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}?ref=${config.branch}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        if (checkResp.ok) {
+          const data = await checkResp.json();
+          sha = data.sha;
+        }
+      } catch (e) {
+        // File doesn't exist, that's ok
+      }
+
+      // Create/Update file
+      const body = {
+        message: message,
+        content: btoa(unescape(encodeURIComponent(frontMatter))),
+        branch: config.branch,
+        ...(sha && { sha })
+      };
+
+      try {
+        showStatus('githubStatus', '📤 正在发布到 GitHub...', 'success');
+
+        const resp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (resp.ok) {
+          showStatus('githubStatus', '✅ 文章已成功发布到 GitHub！GitHub Pages 将自动部署', 'success');
+          
+          // Also update script.js POSTS array
+          await updatePostsArray(token, config, id, title, date, tag, excerpt);
+          
+          // Save to local
+          saveArticle();
+        } else {
+          const error = await resp.json();
+          showStatus('githubStatus', `❌ 发布失败: ${error.message}`, 'error');
+        }
+      } catch (error) {
+        showStatus('githubStatus', `❌ 发布失败: ${error.message}`, 'error');
+      }
+    }
+
+    async function updatePostsArray(token, config, id, title, date, tag, excerpt) {
+      try {
+        // 获取当前的 posts.json
+        const path = 'posts.json';
+        const resp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}?ref=${config.branch}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        let posts = [];
+        let sha = null;
+
+        if (resp.ok) {
+          const data = await resp.json();
+          sha = data.sha;
+          posts = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+        }
+
+        // 检查文章是否已存在
+        const existingIndex = posts.findIndex(p => p.id === id);
+        const newPost = { id, title, date, tag, excerpt };
+
+        if (existingIndex !== -1) {
+          posts[existingIndex] = newPost; // 更新现有文章
+        } else {
+          posts.unshift(newPost); // 添加新文章到开头
+        }
+
+        // 提交更新后的 posts.json
+        await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `Update posts.json: ${title}`,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2)))),
+            branch: config.branch,
+            ...(sha && { sha })
+          })
+        });
+
+        showStatus('githubStatus', '✅ 文章已发布并更新了文章列表！', 'success');
+      } catch (error) {
+        console.error('Failed to update posts.json:', error);
+        showStatus('githubStatus', `⚠️ 文章已发布，但更新列表失败: ${error.message}`, 'error');
+      }
+    }
+
+    // ========== Utility Functions ==========
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showStatus(elementId, message, type) {
+      const el = document.getElementById(elementId);
+      el.textContent = message;
+      el.className = `status-msg status-${type}`;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+  </script>
+</body>
+</html>

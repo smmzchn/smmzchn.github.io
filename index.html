@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>时笠 — 代码 · 生活 · 碎碎念</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="wrap">
+
+    <!-- ===== Header ===== -->
+    <header class="site-header">
+      <div class="site-title">时笠</div>
+      <div class="site-tagline">代码 · 生活 · 碎碎念</div>
+      <nav class="site-nav">
+        <a href="index.html" class="active">博客</a>
+        <a href="category.html?tag=tech">技术</a>
+        <a href="category.html?tag=life">生活</a>
+        <a href="index.html#about">关于</a>
+      </nav>
+    </header>
+
+    <!-- ===== Post List ===== -->
+    <section id="posts">
+      <h2 style="color:#fff;font-size:1.1rem;margin-bottom:16px;">最新文章</h2>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-tag="all">全部</button>
+        <button class="filter-btn" data-tag="tech">技术</button>
+        <button class="filter-btn" data-tag="life">生活</button>
+      </div>
+
+      <div class="post-list" id="postList">
+        <!-- 由 script.js 动态渲染 -->
+      </div>
+    </section>
+
+    <!-- ===== About Section (moved to bottom) ===== -->
+    <section class="about-section" id="about">
+      <h2>关于我</h2>
+      <p>
+        这里是时笠的个人博客。我写技术笔记，也写生活随笔。
+        相信「先开始，再完美」，所以这个博客也是边做边改。
+      </p>
+      <p style="margin-top:12px;">
+        如果你对某个话题感兴趣，欢迎交流 👋
+      </p>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer class="site-footer">
+      <div class="footer-links">
+        <a href="https://github.com" target="_blank">GitHub</a>
+        <a href="mailto:shi.li@example.com">Email</a>
+      </div>
+      <div>© 2026 时笠 · 用 ❤️ 和 HTML 搭建</div>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
