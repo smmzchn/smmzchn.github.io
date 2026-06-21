@@ -79,6 +79,11 @@ function renderPostList(posts) {
 
   container.innerHTML = posts.map(p => {
     const tag = p.tag || "life";
+    const previewImage = p.previewImage || "";
+    const imageHtml = previewImage
+      ? `<img src="${previewImage}" alt="${escapeHtml(p.title)}" style="width:100%;height:100%;object-fit:cover;">`
+      : `<div class="post-card-image-inner ${gradientClass(tag)}"></div>`;
+    
     return `
     <a class="post-card" href="post.html?file=${p.id}">
       <div class="post-card-body">
@@ -91,7 +96,7 @@ function renderPostList(posts) {
         <div class="post-card-date">${formatDate(p.date)}</div>
       </div>
       <div class="post-card-image">
-        <div class="post-card-image-inner ${gradientClass(tag)}"></div>
+        ${imageHtml}
       </div>
     </a>`;
   }).join("");

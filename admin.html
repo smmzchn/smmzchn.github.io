@@ -266,6 +266,89 @@
       display: none;
     }
 
+    /* Image Upload */
+    .image-upload-section {
+      background: var(--bg);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .image-upload-section h4 {
+      margin: 0 0 10px 0;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+    }
+
+    .upload-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .upload-btn {
+      padding: 8px 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .upload-btn:hover {
+      background: var(--hover);
+    }
+
+    .upload-progress {
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    .preview-image-container {
+      margin-top: 10px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .preview-image-container img {
+      max-width: 200px;
+      max-height: 120px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .preview-image-container .remove-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .insert-image-btn {
+      padding: 4px 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-left: 10px;
+    }
+
     .status-success {
       background: #d4edda;
       color: #155724;
@@ -369,6 +452,27 @@
               </select>
             </div>
             <input type="text" id="articleExcerpt" placeholder="文章摘要（会显示在文章列表中）" oninput="updatePreview()">
+            <div class="image-upload-section">
+              <h4>🖼️ 预览图（文章封面）</h4>
+              <div class="upload-area">
+                <input type="file" id="previewImageInput" accept="image/*" style="display:none" onchange="uploadPreviewImage()">
+                <button class="upload-btn" onclick="document.getElementById('previewImageInput').click()">📁 选择预览图</button>
+                <span class="upload-progress" id="previewUploadStatus"></span>
+              </div>
+              <div class="preview-image-container" id="previewImagePreview" style="display:none;">
+                <img id="previewImageImg" src="" alt="预览">
+                <button class="remove-btn" onclick="removePreviewImage()">✕</button>
+              </div>
+              <input type="hidden" id="articlePreviewImage">
+            </div>
+            <div class="image-upload-section">
+              <h4>📷 文章图片（上传后自动插入到文章内容）</h4>
+              <div class="upload-area">
+                <input type="file" id="articleImageInput" accept="image/*" style="display:none" onchange="uploadArticleImage()">
+                <button class="upload-btn" onclick="document.getElementById('articleImageInput').click()">📁 选择图片并插入</button>
+                <span class="upload-progress" id="articleImageUploadStatus"></span>
+              </div>
+            </div>
             <textarea id="articleContent" placeholder="在这里写文章内容（支持 Markdown 格式）..." oninput="updatePreview()"></textarea>
           </div>
 
@@ -672,6 +776,9 @@
       document.getElementById('editorContainer').style.display = 'block';
       document.getElementById('previewPanel').style.display = 'none';
 
+      // 重置预览图
+      removePreviewImage();
+
       if (articleId) {
         // Edit mode
         const articles = getArticles();
@@ -680,8 +787,16 @@
           document.getElementById('articleTitle').value = article.title;
           document.getElementById('articleDate').value = article.date;
           document.getElementById('articleTag').value = article.tag;
-          document.getElementById('articleExcerpt').value = article.excerpt;
+          document.getElementById('articleExcerpt').value = article.excerpt || '';
           document.getElementById('articleContent').value = article.content;
+          document.getElementById('articlePreviewImage').value = article.previewImage || '';
+
+          // 如果有预览图，显示预览
+          if (article.previewImage) {
+            document.getElementById('previewImageImg').src = article.previewImage;
+            document.getElementById('previewImagePreview').style.display = 'inline-block';
+          }
+
           currentEditId = articleId;
         }
       } else {
@@ -691,6 +806,7 @@
         document.getElementById('articleTag').value = 'tech';
         document.getElementById('articleExcerpt').value = '';
         document.getElementById('articleContent').value = '';
+        document.getElementById('articlePreviewImage').value = '';
         currentEditId = null;
       }
 
@@ -711,6 +827,7 @@
       const tag = document.getElementById('articleTag').value;
       const excerpt = document.getElementById('articleExcerpt').value.trim();
       const content = document.getElementById('articleContent').value.trim();
+      const previewImage = document.getElementById('articlePreviewImage').value.trim();
 
       if (!title || !content) {
         alert('请填写标题和内容');
@@ -720,7 +837,7 @@
       const articles = getArticles();
       const id = currentEditId || title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
 
-      const article = { id, title, date, tag, excerpt, content };
+      const article = { id, title, date, tag, excerpt, content, previewImage };
 
       if (currentEditId) {
         const index = articles.findIndex(a => a.id === currentEditId);
@@ -787,6 +904,7 @@
       const tag = document.getElementById('articleTag').value;
       const excerpt = document.getElementById('articleExcerpt').value.trim();
       const content = document.getElementById('articleContent').value.trim();
+      const previewImage = document.getElementById('articlePreviewImage').value.trim();
 
       if (!title || !content) {
         alert('请填写标题和内容');
@@ -797,11 +915,18 @@
       const id = currentEditId || title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
 
       // Create Markdown file content
-      const frontMatter = `---
+      let frontMatter = `---
 title: ${title}
 date: ${date}
 tag: ${tag}
-excerpt: ${excerpt}
+excerpt: ${excerpt}`;
+      
+      if (previewImage) {
+        frontMatter += `
+previewImage: ${previewImage}`;
+      }
+      
+      frontMatter += `
 ---
 
 # ${title}
@@ -854,7 +979,7 @@ ${content}`;
           showStatus('githubStatus', '✅ 文章已成功发布到 GitHub！GitHub Pages 将自动部署', 'success');
           
           // Also update script.js POSTS array
-          await updatePostsArray(token, config, id, title, date, tag, excerpt);
+          await updatePostsArray(token, config, id, title, date, tag, excerpt, previewImage);
           
           // Save to local
           saveArticle();
@@ -867,7 +992,7 @@ ${content}`;
       }
     }
 
-    async function updatePostsArray(token, config, id, title, date, tag, excerpt) {
+    async function updatePostsArray(token, config, id, title, date, tag, excerpt, previewImage) {
       try {
         // 获取当前的 posts.json
         const path = 'posts.json';
@@ -892,8 +1017,22 @@ ${content}`;
         const newPost = { id, title, date, tag, excerpt };
 
         if (existingIndex !== -1) {
+          // 保留原有的 content 和 previewImage 字段
+          const existingPost = posts[existingIndex];
+          newPost.content = existingPost.content || '';
+          
+          if (previewImage) {
+            newPost.previewImage = previewImage;
+          } else if (existingPost.previewImage) {
+            newPost.previewImage = existingPost.previewImage;
+          }
+          
           posts[existingIndex] = newPost; // 更新现有文章
         } else {
+          // 新文章
+          if (previewImage) {
+            newPost.previewImage = previewImage;
+          }
           posts.unshift(newPost); // 添加新文章到开头
         }
 
@@ -920,6 +1059,142 @@ ${content}`;
       }
     }
 
+    // ========== Image Upload Functions ==========
+    async function uploadImageToGitHub(file, type) {
+      const token = getToken();
+      const configStr = localStorage.getItem(GITHUB_CONFIG_KEY);
+      
+      if (!token || !configStr) {
+        alert('❌ 请先登录并配置 GitHub 仓库');
+        return null;
+      }
+      
+      const config = JSON.parse(configStr);
+      
+      // 生成文件名：时间戳 + 原始文件名（避免重复）
+      const timestamp = Date.now();
+      const ext = file.name.split('.').pop();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const filename = `${timestamp}_${randomStr}.${ext}`;
+      const path = `assets/images/${filename}`;
+      
+      // 读取文件为 base64（使用 readAsDataURL 更简单）
+      const reader = new FileReader();
+      const dataUrlPromise = new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+      });
+      
+      reader.readAsDataURL(file);
+      const dataUrl = await dataUrlPromise;
+      
+      // 从 data URL 中提取 base64 内容
+      const base64Content = dataUrl.split(',')[1];
+      
+      // 上传到 GitHub
+      const body = {
+        message: `Upload image: ${filename}`,
+        content: base64Content,
+        branch: config.branch
+      };
+      
+      try {
+        const resp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+        
+        if (resp.ok) {
+          const data = await resp.json();
+          // 返回 raw.githubusercontent.com 的 URL
+          const rawUrl = `https://raw.githubusercontent.com/${config.repo}/${config.branch}/${path}`;
+          return rawUrl;
+        } else {
+          const error = await resp.json();
+          throw new Error(error.message);
+        }
+      } catch (error) {
+        throw error;
+      }
+    }
+    
+    async function uploadPreviewImage() {
+      const fileInput = document.getElementById('previewImageInput');
+      const file = fileInput.files[0];
+      
+      if (!file) return;
+      
+      const statusEl = document.getElementById('previewUploadStatus');
+      statusEl.textContent = '⏳ 上传中...';
+      
+      try {
+        const imageUrl = await uploadImageToGitHub(file, 'preview');
+        
+        // 保存到隐藏字段
+        document.getElementById('articlePreviewImage').value = imageUrl;
+        
+        // 显示预览
+        document.getElementById('previewImageImg').src = imageUrl;
+        document.getElementById('previewImagePreview').style.display = 'inline-block';
+        
+        statusEl.textContent = '✅ 上传成功！';
+        setTimeout(() => statusEl.textContent = '', 3000);
+        
+        // 清空 file input
+        fileInput.value = '';
+      } catch (error) {
+        statusEl.textContent = `❌ 上传失败: ${error.message}`;
+      }
+    }
+    
+    function removePreviewImage() {
+      document.getElementById('articlePreviewImage').value = '';
+      document.getElementById('previewImagePreview').style.display = 'none';
+      document.getElementById('previewImageImg').src = '';
+      document.getElementById('previewUploadStatus').textContent = '';
+    }
+    
+    async function uploadArticleImage() {
+      const fileInput = document.getElementById('articleImageInput');
+      const file = fileInput.files[0];
+      
+      if (!file) return;
+      
+      const statusEl = document.getElementById('articleImageUploadStatus');
+      statusEl.textContent = '⏳ 上传中...';
+      
+      try {
+        const imageUrl = await uploadImageToGitHub(file, 'article');
+        
+        // 在光标位置插入 Markdown 图片语法
+        const textarea = document.getElementById('articleContent');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const imageMarkdown = `![图片](${imageUrl})\n`;
+        
+        textarea.value = text.substring(0, start) + imageMarkdown + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + imageMarkdown.length;
+        textarea.focus();
+        
+        // 触发预览更新
+        updatePreview();
+        
+        statusEl.textContent = '✅ 已插入图片！';
+        setTimeout(() => statusEl.textContent = '', 3000);
+        
+        // 清空 file input
+        fileInput.value = '';
+      } catch (error) {
+        statusEl.textContent = `❌ 上传失败: ${error.message}`;
+      }
+    }
+    
     // ========== Utility Functions ==========
     function escapeHtml(str) {
       const div = document.createElement('div');

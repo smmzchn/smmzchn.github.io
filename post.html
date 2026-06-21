@@ -31,6 +31,9 @@
           <span class="tag" id="postTag"></span>
         </div>
       </div>
+      <div class="post-preview-image" id="postPreviewImage" style="display:none;margin:20px 0;border-radius:8px;overflow:hidden;">
+        <img id="previewImage" src="" alt="预览图" style="width:100%;max-height:400px;object-fit:cover;">
+      </div>
       <div class="post-body" id="postBody">
         <p style="color:var(--text-dim)">正在加载文章…</p>
       </div>
@@ -63,35 +66,33 @@
       document.getElementById("postBody").innerHTML =
         "<p style='color:var(--text-dim)'>没有指定文章。</p>";
     } else {
-      fetch(`posts/${file}.md`)
+      // 从 posts.json 加载文章（内容已内嵌，无需单独请求 .md 文件）
+      fetch(`posts.json?t=${Date.now()}`)
         .then(res => {
-          if (!res.ok) throw new Error("文章不存在");
-          return res.text();
+          if (!res.ok) throw new Error("posts.json 加载失败");
+          return res.json();
         })
-        .then(md => {
-          // 解析 frontmatter (--- 之间的元数据)
-          const fmMatch = md.match(/^---\n([\s\S]*?)\n---/);
-          let content = md;
-          if (fmMatch) {
-            const fm = fmMatch[1];
-            const title = fm.match(/title:\s*(.*)/)?.[1]?.trim();
-            const date  = fm.match(/date:\s*(.*)/)?.[1]?.trim();
-            const tag   = fm.match(/tag:\s*(.*)/)?.[1]?.trim();
-            content = md.slice(fmMatch[0].length).trim();
+        .then(posts => {
+          const post = posts.find(p => p.id === file);
+          if (!post) throw new Error("文章不存在");
 
-            if (title) {
-              document.getElementById("postTitle").textContent = title;
-              document.title = title + " — 时笠的博客";
-            }
-            if (date)  document.getElementById("postDate").textContent = date;
-            if (tag) {
-              const tagEl = document.getElementById("postTag");
-              tagEl.textContent = tag === "tech" ? "技术" : "生活";
-              tagEl.className   = "tag tag--" + (tag === "tech" ? "tech" : "life");
-            }
+          // 填充标题、日期、标签
+          document.getElementById("postTitle").textContent = post.title;
+          document.title = post.title + " — 时笠的博客";
+          document.getElementById("postDate").textContent = post.date;
+
+          const tagEl = document.getElementById("postTag");
+          const tagLabel = post.tag === "tech" ? "技术" : "生活";
+          tagEl.textContent = tagLabel;
+          tagEl.className = "tag tag--" + post.tag;
+
+          // 显示预览图
+          if (post.previewImage) {
+            document.getElementById("previewImage").src = post.previewImage;
+            document.getElementById("postPreviewImage").style.display = "block";
           }
 
-          // 渲染 Markdown
+          // 渲染 Markdown 内容
           marked.setOptions({
             highlight: function (code, lang) {
               if (lang && hljs.getLanguage(lang)) {
@@ -103,7 +104,7 @@
             gfm: true
           });
 
-          document.getElementById("postBody").innerHTML = marked.parse(content);
+          document.getElementById("postBody").innerHTML = marked.parse(post.content);
           // 代码块高亮
           document.querySelectorAll("pre code").forEach(block => {
             hljs.highlightBlock(block);
