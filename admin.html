@@ -856,12 +856,115 @@
       showEditor(id);
     }
 
-    function deleteArticle(id) {
-      if (!confirm('确定要删除这篇文章吗？')) return;
+    async function deleteArticle(id) {
+      if (!confirm('确定要删除这篇文章吗？\n\n（将同时删除 GitHub 上的文章文件和更新文章列表）')) return;
 
+      const token = getToken();
+      const configStr = localStorage.getItem(GITHUB_CONFIG_KEY);
+
+      // 先删本地
       const articles = getArticles().filter(a => a.id !== id);
       saveArticles(articles);
+
+      // 如果没登录或没配置，只删本地
+      if (!token || !configStr) {
+        loadArticles();
+        showStatus('githubStatus', '✅ 文章已从本地删除（未登录 GitHub，远程未删除）', 'success');
+        return;
+      }
+
+      const config = JSON.parse(configStr);
+      showStatus('githubStatus', '⏳ 正在删除 GitHub 上的文章...', 'success');
+
+      try {
+        // 1. 获取 .md 文件的 sha（删除文件需要 sha）
+        const mdPath = `posts/${id}.md`;
+        const mdResp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${mdPath}?ref=${config.branch}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (mdResp.ok) {
+          const mdData = await mdResp.json();
+          // 删除 .md 文件
+          const deleteResp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${mdPath}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              message: `Delete article: ${id}`,
+              sha: mdData.sha,
+              branch: config.branch
+            })
+          });
+
+          if (!deleteResp.ok) {
+            const err = await deleteResp.json();
+            console.error('删除 .md 文件失败：', err);
+          }
+        }
+
+        // 2. 更新 posts.json（删除文章记录）
+        await removeFromPostsJson(token, config, id);
+
+        showStatus('githubStatus', '✅ 文章已从本地和 GitHub 删除', 'success');
+      } catch (error) {
+        console.error('删除失败：', error);
+        showStatus('githubStatus', `⚠️ 本地已删除，但 GitHub 删除失败：${error.message}`, 'error');
+      }
+
       loadArticles();
+    }
+
+    async function removeFromPostsJson(token, config, id) {
+      try {
+        // 获取当前的 posts.json
+        const path = 'posts.json';
+        const resp = await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}?ref=${config.branch}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!resp.ok) return;
+
+        const data = await resp.json();
+        let posts = [];
+        try {
+          posts = JSON.parse(codeURIComponent(escape(atob(data.content))));
+        } catch (e) {
+          posts = [];
+        }
+
+        // 删除文章记录
+        posts = posts.filter(p => p.id !== id);
+
+        // 更新 posts.json
+        const body = {
+          message: `Remove article from posts.json: ${id}`,
+          content: btoa(unescape(encodeURIComponent(JSON.stringify(posts, null, 2)))),
+          sha: data.sha,
+          branch: config.branch
+        };
+
+        await fetch(`https://api.github.com/repos/${config.repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+      } catch (error) {
+        console.error('更新 posts.json 失败：', error);
+      }
     }
 
     // ========== Preview ==========
